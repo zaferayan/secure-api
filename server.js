@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const fs = require("fs");
 
+const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDoc = require("./swagger.json");
 
@@ -14,6 +15,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@secure-api.com";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
 app.set("json spaces", 2);
+app.use(cors());
 app.use(express.json());
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
