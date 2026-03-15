@@ -1,11 +1,14 @@
+require("dotenv").config();
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const fs = require("fs");
 
 const app = express();
-const PORT = 3000;
-const SECRET = "secure-api-secret-key";
+const PORT = process.env.PORT || 3000;
+const SECRET = process.env.JWT_SECRET || "secure-api-secret-key";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@secure-api.com";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
 app.set("json spaces", 2);
 app.use(express.json());
@@ -487,17 +490,17 @@ app.delete("/admin/users/:id", authenticate, adminOnly, (req, res) => {
 async function seedAdmin() {
   const db = getDb();
   if (db.users.length === 0) {
-    const hashedPassword = await bcrypt.hash("admin123", 10);
+    const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
     db.users.push({
       id: 1,
       username: "admin",
-      email: "admin@secure-api.com",
+      email: ADMIN_EMAIL,
       password: hashedPassword,
       role: "admin",
       createdAt: new Date().toISOString(),
     });
     saveDb(db);
-    console.log("  Seed admin created: admin@secure-api.com / admin123\n");
+    console.log(`  Seed admin created: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}\n`);
   }
 }
 
