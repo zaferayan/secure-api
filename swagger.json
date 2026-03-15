@@ -1,0 +1,468 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Secure API",
+    "description": "REST API with JWT authentication, protected routes, and role-based access control.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "http://localhost:3000", "description": "Local" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "username": { "type": "string" },
+          "email": { "type": "string" },
+          "role": { "type": "string", "enum": ["user", "admin"] },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "price": { "type": "number" },
+          "stock": { "type": "integer" },
+          "category": { "type": "string" }
+        }
+      },
+      "Post": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "title": { "type": "string" },
+          "body": { "type": "string" },
+          "category": { "type": "string" },
+          "authorId": { "type": "integer", "nullable": true }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "userId": { "type": "integer" },
+          "productId": { "type": "integer" },
+          "quantity": { "type": "integer" },
+          "status": { "type": "string", "enum": ["pending", "shipped", "delivered"] },
+          "date": { "type": "string", "format": "date" }
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "postId": { "type": "integer" },
+          "userId": { "type": "integer" },
+          "body": { "type": "string" },
+          "date": { "type": "string", "format": "date" }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "token": { "type": "string" },
+          "user": { "$ref": "#/components/schemas/User" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string" }
+        }
+      }
+    }
+  },
+  "tags": [
+    { "name": "Auth", "description": "Authentication endpoints" },
+    { "name": "Products", "description": "Public product endpoints" },
+    { "name": "Posts", "description": "Blog post endpoints (mixed access)" },
+    { "name": "Orders", "description": "Order endpoints (protected)" },
+    { "name": "Comments", "description": "Comment endpoints (protected)" },
+    { "name": "Admin", "description": "Admin-only endpoints" }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Create a new account",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "email", "password"],
+                "properties": {
+                  "username": { "type": "string", "example": "john" },
+                  "email": { "type": "string", "example": "john@test.com" },
+                  "password": { "type": "string", "example": "123456" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Account created",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } }
+          },
+          "400": { "description": "Missing fields", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Email or username already exists", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login and get a token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "example": "admin@secure-api.com" },
+                  "password": { "type": "string", "example": "admin123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } }
+          },
+          "400": { "description": "Missing fields", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Invalid credentials", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Auth"],
+        "summary": "Get current user profile",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "User profile", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "put": {
+        "tags": ["Auth"],
+        "summary": "Update current user profile",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { "type": "string" },
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profile updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Email already in use", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "tags": ["Products"],
+        "summary": "List all products",
+        "responses": {
+          "200": {
+            "description": "Product list",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Product" } } } }
+          }
+        }
+      }
+    },
+    "/products/{id}": {
+      "get": {
+        "tags": ["Products"],
+        "summary": "Get a single product",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Product details", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Product" } } } },
+          "404": { "description": "Not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/posts": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "List all posts",
+        "responses": {
+          "200": {
+            "description": "Post list",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Post" } } } }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Create a new post",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "body"],
+                "properties": {
+                  "title": { "type": "string", "example": "My New Post" },
+                  "body": { "type": "string", "example": "This is the content." },
+                  "category": { "type": "string", "example": "general" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Post created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Post" } } } },
+          "400": { "description": "Missing fields", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/posts/{id}": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Get a single post",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Post details", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Post" } } } },
+          "404": { "description": "Not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "put": {
+        "tags": ["Posts"],
+        "summary": "Update own post",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "body": { "type": "string" },
+                  "category": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Post updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Post" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Not the owner", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "delete": {
+        "tags": ["Posts"],
+        "summary": "Delete own post",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Post deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Post" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Not the owner", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/orders": {
+      "get": {
+        "tags": ["Orders"],
+        "summary": "List current user's orders (admin sees all)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Order list",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Order" } } } }
+          },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "post": {
+        "tags": ["Orders"],
+        "summary": "Create a new order",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["productId", "quantity"],
+                "properties": {
+                  "productId": { "type": "integer", "example": 2 },
+                  "quantity": { "type": "integer", "example": 1 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Order created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Order" } } } },
+          "400": { "description": "Missing fields or not enough stock", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Product not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/orders/{id}": {
+      "get": {
+        "tags": ["Orders"],
+        "summary": "Get a specific order",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Order details", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Order" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Not the owner", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/comments": {
+      "get": {
+        "tags": ["Comments"],
+        "summary": "List comments",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "postId", "in": "query", "schema": { "type": "integer" }, "description": "Filter by post ID" }],
+        "responses": {
+          "200": {
+            "description": "Comment list",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Comment" } } } }
+          },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "post": {
+        "tags": ["Comments"],
+        "summary": "Add a comment to a post",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["postId", "body"],
+                "properties": {
+                  "postId": { "type": "integer", "example": 1 },
+                  "body": { "type": "string", "example": "Great post!" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Comment added", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Comment" } } } },
+          "400": { "description": "Missing fields", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Post not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/comments/{id}": {
+      "delete": {
+        "tags": ["Comments"],
+        "summary": "Delete own comment",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "Comment deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Comment" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Not the owner", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/admin/users": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "List all users",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "User list (without passwords)",
+            "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/User" } } } }
+          },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Admin access required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/admin/users/{id}/role": {
+      "put": {
+        "tags": ["Admin"],
+        "summary": "Change user role",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["role"],
+                "properties": {
+                  "role": { "type": "string", "enum": ["user", "admin"], "example": "admin" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Role updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "400": { "description": "Invalid role", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Admin access required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "User not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/admin/users/{id}": {
+      "delete": {
+        "tags": ["Admin"],
+        "summary": "Delete a user",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }],
+        "responses": {
+          "200": { "description": "User deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "400": { "description": "Cannot delete yourself", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Admin access required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "User not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    }
+  }
+}

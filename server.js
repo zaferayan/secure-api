@@ -4,6 +4,9 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const fs = require("fs");
 
+const swaggerUi = require("swagger-ui-express");
+const swaggerDoc = require("./swagger.json");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.JWT_SECRET || "secure-api-secret-key";
@@ -12,6 +15,7 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
 app.set("json spaces", 2);
 app.use(express.json());
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 // --- DB helpers ---
 
