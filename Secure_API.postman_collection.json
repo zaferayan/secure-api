@@ -44,13 +44,13 @@
           }
         },
         {
-          "name": "Register (Admin)",
+          "name": "Login (Seed Admin)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 201) {",
+                  "if (pm.response.code === 200) {",
                   "  const res = pm.response.json();",
                   "  pm.collectionVariables.set('token', res.token);",
                   "  pm.test('Admin token saved', () => pm.expect(res.user.role).to.equal('admin'));",
@@ -65,9 +65,9 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"admin\",\n  \"email\": \"admin@test.com\",\n  \"password\": \"admin123\",\n  \"role\": \"admin\"\n}"
+              "raw": "{\n  \"email\": \"admin@secure-api.com\",\n  \"password\": \"admin123\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
           }
         },
         {
@@ -273,6 +273,18 @@
           "request": {
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/admin/users", "host": ["{{baseUrl}}"], "path": ["admin", "users"] }
+          }
+        },
+        {
+          "name": "Change User Role",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"admin\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/admin/users/2/role", "host": ["{{baseUrl}}"], "path": ["admin", "users", "2", "role"] }
           }
         },
         {

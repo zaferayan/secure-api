@@ -62,6 +62,7 @@ Tokenlar 7 gün geçerlidir.
 | Metot | Endpoint | Açıklama |
 |-------|----------|----------|
 | GET | `/admin/users` | Tüm kullanıcıları listele |
+| PUT | `/admin/users/:id/role` | Kullanıcı rolünü değiştir |
 | DELETE | `/admin/users/:id` | Kullanıcı sil |
 
 ## Örnekler
@@ -115,12 +116,20 @@ curl http://localhost:3000/orders
 | 404 | Bulunamadı |
 | 409 | Çakışma (e-posta veya kullanıcı adı zaten mevcut) |
 
-## Yönetici Olarak Kayıt
+## Yönetici Erişimi
 
-Kayıt gövdesinde `"role": "admin"` gönderin:
+İlk çalıştırmada otomatik olarak bir yönetici hesabı oluşturulur:
+
+```
+E-posta: admin@secure-api.com
+Şifre: admin123
+```
+
+Bir kullanıcıyı yönetici yapmak için admin endpoint'ini kullanın:
 
 ```bash
-curl -X POST http://localhost:3000/auth/register \
+curl -X PUT http://localhost:3000/admin/users/2/role \
   -H "Content-Type: application/json" \
-  -d '{"username":"yonetici","email":"yonetici@test.com","password":"admin123","role":"admin"}'
+  -H "Authorization: Bearer <admin-token>" \
+  -d '{"role":"admin"}'
 ```

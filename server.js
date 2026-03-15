@@ -79,7 +79,7 @@ app.get("/", (req, res) => {
 
 // POST /auth/register
 app.post("/auth/register", async (req, res) => {
-  const { username, email, password, role } = req.body;
+  const { username, email, password } = req.body;
 
   if (!username || !email || !password) {
     return res.status(400).json({ error: "username, email, and password are required." });
@@ -103,7 +103,7 @@ app.post("/auth/register", async (req, res) => {
     username,
     email,
     password: hashedPassword,
-    role: role === "admin" ? "admin" : "user",
+    role: "user",
     createdAt: new Date().toISOString(),
   };
 
@@ -434,6 +434,28 @@ function adminOnly(req, res, next) {
   next();
 }
 
+// PUT /admin/users/:id/role (admin only - promote/demote users)
+app.put("/admin/users/:id/role", authenticate, adminOnly, (req, res) => {
+  const { role } = req.body;
+
+  if (!role || !["user", "admin"].includes(role)) {
+    return res.status(400).json({ error: "role must be 'user' or 'admin'." });
+  }
+
+  const db = getDb();
+  const index = db.users.findIndex((u) => u.id === Number(req.params.id));
+
+  if (index === -1) {
+    return res.status(404).json({ error: "User not found." });
+  }
+
+  db.users[index].role = role;
+  saveDb(db);
+
+  const { password: _, ...userWithoutPassword } = db.users[index];
+  res.json(userWithoutPassword);
+});
+
 // GET /admin/users (admin only)
 app.get("/admin/users", authenticate, adminOnly, (req, res) => {
   const db = getDb();
@@ -460,9 +482,29 @@ app.delete("/admin/users/:id", authenticate, adminOnly, (req, res) => {
   res.json(userWithoutPassword);
 });
 
+// --- Seed admin user ---
+
+async function seedAdmin() {
+  const db = getDb();
+  if (db.users.length === 0) {
+    const hashedPassword = await bcrypt.hash("admin123", 10);
+    db.users.push({
+      id: 1,
+      username: "admin",
+      email: "admin@secure-api.com",
+      password: hashedPassword,
+      role: "admin",
+      createdAt: new Date().toISOString(),
+    });
+    saveDb(db);
+    console.log("  Seed admin created: admin@secure-api.com / admin123\n");
+  }
+}
+
 // --- Start ---
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
+  await seedAdmin();
   console.log(`\n  Secure API running at http://localhost:${PORT}\n`);
   console.log("  Public endpoints:");
   console.log("    POST /auth/register");
@@ -482,6 +524,7 @@ app.listen(PORT, () => {
   console.log("    DEL  /comments/:id");
   console.log("\n  Admin only:");
   console.log("    GET  /admin/users");
+  console.log("    PUT  /admin/users/:id/role");
   console.log("    DEL  /admin/users/:id");
   console.log();
 });

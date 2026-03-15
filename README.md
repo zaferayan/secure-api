@@ -62,6 +62,7 @@ Tokens expire after 7 days.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/admin/users` | List all users |
+| PUT | `/admin/users/:id/role` | Change user role |
 | DELETE | `/admin/users/:id` | Delete a user |
 
 ## Examples
@@ -115,12 +116,20 @@ curl http://localhost:3000/orders
 | 404 | Not found |
 | 409 | Conflict (duplicate email/username) |
 
-## Register as Admin
+## Admin Access
 
-Pass `"role": "admin"` in the register body:
+A seed admin account is created automatically on first run:
+
+```
+Email: admin@secure-api.com
+Password: admin123
+```
+
+To promote a user to admin, use the admin endpoint:
 
 ```bash
-curl -X POST http://localhost:3000/auth/register \
+curl -X PUT http://localhost:3000/admin/users/2/role \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","email":"admin@test.com","password":"admin123","role":"admin"}'
+  -H "Authorization: Bearer <admin-token>" \
+  -d '{"role":"admin"}'
 ```
