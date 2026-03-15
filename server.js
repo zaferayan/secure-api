@@ -6,7 +6,10 @@ const fs = require("fs");
 
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
-const swaggerDoc = require("./swagger.json");
+const swaggerDoc = {
+  ...require("./swagger.json"),
+  servers: [{ url: process.env.API_URL || `http://localhost:${process.env.PORT || 3000}` }],
+};
 
 const app = express();
 const PORT = process.env.PORT || 3000;
