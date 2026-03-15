@@ -222,7 +222,11 @@ app.get("/products/:id", (req, res) => {
 // GET /posts (public)
 app.get("/posts", (req, res) => {
   const db = getDb();
-  res.json(db.posts);
+  const posts = db.posts.map((post) => {
+    const author = db.users.find((u) => u.id === post.authorId);
+    return { ...post, author: author ? { id: author.id, username: author.username } : null };
+  });
+  res.json(posts);
 });
 
 // GET /posts/:id (public)
@@ -234,7 +238,8 @@ app.get("/posts/:id", (req, res) => {
     return res.status(404).json({ error: "Post not found." });
   }
 
-  res.json(post);
+  const author = db.users.find((u) => u.id === post.authorId);
+  res.json({ ...post, author: author ? { id: author.id, username: author.username } : null });
 });
 
 // POST /posts (protected)
