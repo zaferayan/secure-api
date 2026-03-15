@@ -1,0 +1,27 @@
+{
+  "users": [],
+  "posts": [
+    { "id": 1, "title": "Getting Started with REST APIs", "body": "REST APIs are the backbone of modern web development...", "category": "tutorial", "authorId": null },
+    { "id": 2, "title": "JavaScript Tips & Tricks", "body": "Here are some lesser-known JavaScript features...", "category": "tutorial", "authorId": null },
+    { "id": 3, "title": "Understanding JWT Authentication", "body": "JSON Web Tokens provide a compact way to transmit information...", "category": "security", "authorId": null },
+    { "id": 4, "title": "CSS Grid vs Flexbox", "body": "Both CSS Grid and Flexbox are powerful layout tools...", "category": "tutorial", "authorId": null },
+    { "id": 5, "title": "Node.js Best Practices", "body": "Follow these best practices to write clean Node.js code...", "category": "tutorial", "authorId": null }
+  ],
+  "products": [
+    { "id": 1, "name": "Wireless Headphones", "price": 79.99, "stock": 150, "category": "electronics" },
+    { "id": 2, "name": "Mechanical Keyboard", "price": 129.99, "stock": 80, "category": "electronics" },
+    { "id": 3, "name": "USB-C Hub", "price": 49.99, "stock": 200, "category": "accessories" },
+    { "id": 4, "name": "Laptop Stand", "price": 39.99, "stock": 120, "category": "accessories" },
+    { "id": 5, "name": "Webcam HD", "price": 59.99, "stock": 90, "category": "electronics" }
+  ],
+  "orders": [
+    { "id": 1, "userId": 1, "productId": 1, "quantity": 2, "status": "delivered", "date": "2025-01-15" },
+    { "id": 2, "userId": 1, "productId": 3, "quantity": 1, "status": "shipped", "date": "2025-02-20" },
+    { "id": 3, "userId": 2, "productId": 2, "quantity": 1, "status": "pending", "date": "2025-03-01" }
+  ],
+  "comments": [
+    { "id": 1, "postId": 1, "userId": 1, "body": "Great article, very helpful!", "date": "2025-01-10" },
+    { "id": 2, "postId": 1, "userId": 2, "body": "Thanks for sharing this.", "date": "2025-01-11" },
+    { "id": 3, "postId": 3, "userId": 1, "body": "JWT is essential for modern apps.", "date": "2025-02-05" }
+  ]
+}
