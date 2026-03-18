@@ -8,7 +8,12 @@ const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDoc = {
   ...require("./swagger.json"),
-  servers: [{ url: process.env.API_URL || `http://localhost:${process.env.PORT || 3000}` }],
+  servers: [
+    {
+      url:
+        process.env.API_URL || `http://localhost:${process.env.PORT || 3000}`,
+    },
+  ],
 };
 
 const app = express();
@@ -94,7 +99,9 @@ app.post("/auth/register", async (req, res) => {
   const { username, email, password } = req.body;
 
   if (!username || !email || !password) {
-    return res.status(400).json({ error: "username, email, and password are required." });
+    return res
+      .status(400)
+      .json({ error: "username, email, and password are required." });
   }
 
   const db = getDb();
@@ -122,7 +129,11 @@ app.post("/auth/register", async (req, res) => {
   db.users.push(newUser);
   saveDb(db);
 
-  const token = jwt.sign({ id: newUser.id, username: newUser.username, role: newUser.role }, SECRET, { expiresIn: "7d" });
+  const token = jwt.sign(
+    { id: newUser.id, username: newUser.username, role: newUser.role },
+    SECRET,
+    { expiresIn: "7d" },
+  );
   const { password: _, ...userWithoutPassword } = newUser;
 
   res.status(201).json({ token, user: userWithoutPassword });
@@ -148,7 +159,11 @@ app.post("/auth/login", async (req, res) => {
     return res.status(401).json({ error: "Invalid email or password." });
   }
 
-  const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET, { expiresIn: "7d" });
+  const token = jwt.sign(
+    { id: user.id, username: user.username, role: user.role },
+    SECRET,
+    { expiresIn: "7d" },
+  );
   const { password: _, ...userWithoutPassword } = user;
 
   res.json({ token, user: userWithoutPassword });
@@ -224,7 +239,10 @@ app.get("/posts", (req, res) => {
   const db = getDb();
   const posts = db.posts.map((post) => {
     const author = db.users.find((u) => u.id === post.authorId);
-    return { ...post, author: author ? { id: author.id, username: author.username } : null };
+    return {
+      ...post,
+      author: author ? { id: author.id, username: author.username } : null,
+    };
   });
   res.json(posts);
 });
@@ -239,7 +257,10 @@ app.get("/posts/:id", (req, res) => {
   }
 
   const author = db.users.find((u) => u.id === post.authorId);
-  res.json({ ...post, author: author ? { id: author.id, username: author.username } : null });
+  res.json({
+    ...post,
+    author: author ? { id: author.id, username: author.username } : null,
+  });
 });
 
 // POST /posts (protected)
@@ -299,7 +320,9 @@ app.delete("/posts/:id", authenticate, (req, res) => {
   }
 
   if (db.posts[index].authorId !== req.user.id && req.user.role !== "admin") {
-    return res.status(403).json({ error: "You can only delete your own posts." });
+    return res
+      .status(403)
+      .json({ error: "You can only delete your own posts." });
   }
 
   const deleted = db.posts.splice(index, 1)[0];
@@ -315,9 +338,10 @@ app.delete("/posts/:id", authenticate, (req, res) => {
 app.get("/orders", authenticate, (req, res) => {
   const db = getDb();
 
-  const orders = req.user.role === "admin"
-    ? db.orders
-    : db.orders.filter((o) => o.userId === req.user.id);
+  const orders =
+    req.user.role === "admin"
+      ? db.orders
+      : db.orders.filter((o) => o.userId === req.user.id);
 
   res.json(orders);
 });
@@ -343,7 +367,9 @@ app.post("/orders", authenticate, (req, res) => {
   const { productId, quantity } = req.body;
 
   if (!productId || !quantity) {
-    return res.status(400).json({ error: "productId and quantity are required." });
+    return res
+      .status(400)
+      .json({ error: "productId and quantity are required." });
   }
 
   const db = getDb();
@@ -354,7 +380,9 @@ app.post("/orders", authenticate, (req, res) => {
   }
 
   if (product.stock < quantity) {
-    return res.status(400).json({ error: `Not enough stock. Available: ${product.stock}` });
+    return res
+      .status(400)
+      .json({ error: `Not enough stock. Available: ${product.stock}` });
   }
 
   const maxId = db.orders.reduce((max, o) => Math.max(max, o.id), 0);
@@ -432,7 +460,9 @@ app.delete("/comments/:id", authenticate, (req, res) => {
   }
 
   if (db.comments[index].userId !== req.user.id && req.user.role !== "admin") {
-    return res.status(403).json({ error: "You can only delete your own comments." });
+    return res
+      .status(403)
+      .json({ error: "You can only delete your own comments." });
   }
 
   const deleted = db.comments.splice(index, 1)[0];
@@ -520,7 +550,7 @@ async function seedAdmin() {
 
 // --- Start ---
 
-app.listen(PORT, async () => {
+app.listen(PORT, "0.0.0.0", async () => {
   await seedAdmin();
   console.log(`\n  Secure API running at http://localhost:${PORT}\n`);
   console.log("  Public endpoints:");
